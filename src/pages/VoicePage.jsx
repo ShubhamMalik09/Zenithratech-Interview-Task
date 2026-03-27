@@ -8,7 +8,7 @@ const VoicePage = () => {
   return (
     <div className="min-h-screen bg-slate-900 text-white p-6">
         <Header title={"Voice"}/>
-      <Voice />
+        <Voice />
     </div>
   );
 };

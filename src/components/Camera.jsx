@@ -6,14 +6,13 @@ const Camera = () => {
   const [stream, setStream] = useState(null);
   const [status, setStatus] = useState("idle");
 
-  // 🔥 Check permission on load
   useEffect(() => {
     const checkPermission = async () => {
       try {
         const result = await navigator.permissions.query({ name: "camera" });
 
         if (result.state === "granted") {
-          setStatus("idle"); // ready to start
+          setStatus("idle");
         } else if (result.state === "denied") {
           setStatus("denied");
         } else {

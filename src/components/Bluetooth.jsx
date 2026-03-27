@@ -26,7 +26,6 @@ const Bluetooth = () => {
   return (
     <div className="bg-slate-800 p-6 rounded-xl shadow-xl max-w-md mx-auto text-center">
 
-      {/* 🦷 Button */}
       <button
         onClick={connectDevice}
         disabled={status === "start"}
@@ -41,12 +40,10 @@ const Bluetooth = () => {
           : "Scan Devices"}
       </button>
 
-      {/* 📊 Status */}
       <p className={`mt-4 text-sm ${currentStatus.color}`}>
         Status - {currentStatus.text}
       </p>
 
-      {/* 📡 Device Box */}
       <div className="mt-4 p-3 bg-slate-700 rounded-lg min-h-[80px]">
         <p className="text-blue-400 text-xl">
           {device || "No device connected"}

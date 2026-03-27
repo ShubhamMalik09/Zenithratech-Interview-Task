@@ -4,9 +4,48 @@ import { STATUS_MESSAGES } from "../utils/status-config";
 const Voice = () => {
   const [text, setText] = useState("");
   const [status, setStatus] = useState("idle");
-  const recognitionRef = useRef(null);
 
-  // 🔥 Check mic permission on load
+  const recognitionRef = useRef(null);
+  const isListeningRef = useRef(false);
+
+  useEffect(() => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setStatus("denied");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onresult = (event) => {
+      let transcript = "";
+
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += " " + event.results[i][0].transcript;
+      }
+
+      setText(transcript);
+      setStatus("active");
+    };
+
+    recognition.onerror = () => {
+      setStatus("denied");
+      isListeningRef.current = false;
+    };
+
+    recognition.onend = () => {
+      if (isListeningRef.current) {
+        recognition.start();
+      }
+    };
+
+    recognitionRef.current = recognition;
+  }, []);
+
   useEffect(() => {
     const checkPermission = async () => {
       try {
@@ -26,44 +65,20 @@ const Voice = () => {
   }, []);
 
   const startListening = () => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!recognitionRef.current) return;
 
-    if (!SpeechRecognition) {
-      setStatus("denied");
-      return;
-    }
-
+    isListeningRef.current = true;
     setStatus("start");
 
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognitionRef.current = recognition;
-
-    recognition.start();
-
-    recognition.onresult = (event) => {
-      let transcript = "";
-      for (let i = 0; i < event.results.length; i++) {
-        transcript += event.results[i][0].transcript;
-      }
-      setText(transcript);
-      setStatus("active");
-    };
-
-    recognition.onerror = () => {
-      setStatus("denied");
-    };
-
-    recognition.onend = () => {
-      // If user stops speaking automatically
-      if (status === "active") {
-        setStatus("stop");
-      }
-    };
+    try {
+      recognitionRef.current.start();
+    } catch {
+      setStatus('permission Denied')
+    }
   };
 
   const stopListening = () => {
+    isListeningRef.current = false;
     recognitionRef.current?.stop();
     setStatus("stop");
   };
@@ -73,39 +88,35 @@ const Voice = () => {
   return (
     <div className="bg-slate-800 p-6 rounded-xl shadow-xl max-w-5xl mx-auto text-center">
 
-      {/* 🎤 Button */}
       <button
         onClick={status === "active" ? stopListening : startListening}
         disabled={status === "start"}
-        className="btn w-full"
+        className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 transition"
       >
         {status === "start"
           ? "Starting..."
           : status === "active"
-          ? "Stop"
+          ? "Stop Listening"
           : status === "denied"
-          ? "Ask Permission"
-          : "Start"}
+          ? "Enable Permission"
+          : "Start Listening"}
       </button>
 
-      {/* 📊 Status */}
       <p className={`mt-4 text-sm ${currentStatus.color}`}>
         Status - {currentStatus.text}
       </p>
 
-      {/* 📝 Transcript Box */}
-      <div className="mt-4 p-3 bg-slate-700 rounded-lg min-h-[30vh] text-left">
-        <p className="text-green-400">
-          {text || "Your speech will appear here..."}
+      <div className="mt-4 p-4 bg-slate-700 rounded-xl min-h-[30vh] text-left">
+        <p className="text-green-400 whitespace-pre-wrap">
+          {text || "Start speaking to see live transcription..."}
         </p>
       </div>
 
       {status === "denied" && (
-        <p className="text-red-400 mt-2 text-sm">
-            Please enable permission from browser settings
+        <p className="text-red-400 mt-3 text-sm">
+          Please enable microphone access from browser settings
         </p>
-        )}
-
+      )}
     </div>
   );
 };
