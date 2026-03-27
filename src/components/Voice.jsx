@@ -3,6 +3,8 @@ import { STATUS_MESSAGES } from "../utils/status-config";
 
 const Voice = () => {
   const [text, setText] = useState("");
+  const [finalText, setFinalText] = useState("");
+  const [interimText, setInterimText] = useState("");
   const [status, setStatus] = useState("idle");
 
   const recognitionRef = useRef(null);
@@ -22,14 +24,23 @@ const Voice = () => {
     recognition.interimResults = true;
 
     recognition.onresult = (event) => {
-      let transcript = "";
+        let interim = "";
+        let final = "";
 
-      for (let i = 0; i < event.results.length; i++) {
-        transcript += " " + event.results[i][0].transcript;
-      }
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
 
-      setText(transcript);
-      setStatus("active");
+            if (event.results[i].isFinal) {
+                final += transcript + " ";
+            } else {
+                interim += transcript;
+            }
+        }
+        
+        if (final) {
+            setFinalText((prev) => prev + final);
+        }
+        setInterimText(interim);
     };
 
     recognition.onerror = () => {
@@ -72,6 +83,7 @@ const Voice = () => {
 
     try {
       recognitionRef.current.start();
+      setStatus("active");
     } catch {
       setStatus('permission Denied')
     }
@@ -108,7 +120,8 @@ const Voice = () => {
 
       <div className="mt-4 p-4 bg-slate-700 rounded-xl min-h-[30vh] text-left">
         <p className="text-green-400 whitespace-pre-wrap">
-          {text || "Start speaking to see live transcription..."}
+            {finalText}
+            <span className="opacity-50">{interimText}</span>
         </p>
       </div>
 
